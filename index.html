@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>رنگ‌آمیزی با شماره - پالت قابل ویرایش</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --paper: #fffdf8;
+      --ink: #2c241b;
+      --muted: #7a6d5d;
+      --line: #e4d8c8;
+      --accent: #c45c26;
+      --accent-dark: #9a4418;
+      --ok: #2f7d4a;
+      --shadow: 0 8px 28px rgba(70, 48, 24, 0.12);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: radial-gradient(circle at top, #fff8ee, var(--bg) 55%);
+      color: var(--ink);
+      font-family: "Vazirmatn", "Tahoma", "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      max-width: 980px;
+      margin: 0 auto;
+      min-height: 100dvh;
+    }
+
+    header {
+      padding: 16px 16px 6px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      padding: 10px 12px 4px;
+    }
+
+    button, .file-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:hover:not(:disabled), .file-btn:hover {
+      filter: brightness(0.97);
+    }
+
+    button:active:not(:disabled), .file-btn:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    button.primary, .file-btn.primary { background: var(--accent); color: #fff; }
+    button.good { background: var(--ok); color: #fff; }
+    button.ghost { background: #efe6d8; }
+
+    .file-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; }
+    .file-btn input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .stage-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 8px 12px 0;
+    }
+
+    .canvas-card {
+      flex: 1;
+      min-height: 280px;
+      background: var(--paper);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 1px solid var(--line);
+    }
+
+    canvas {
+      max-width: 100%;
+      max-height: calc(100dvh - 310px);
+      width: auto;
+      height: auto;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+      background: #fff;
+    }
+
+    .hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .hint.hidden { display: none; }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 4px 4px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .selected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px #cbbba6;
+      flex-shrink: 0;
+    }
+
+    .palette-section {
+      padding: 6px 12px 16px;
+    }
+
+    .palette-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
+    .palette-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .color-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 68px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 6px 4px;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .color-card:hover {
+      transform: translateY(-1px);
+    }
+
+    .color-card.active {
+      border-color: var(--accent);
+      background: #fffdf9;
+      box-shadow: 0 0 0 2px rgba(196, 92, 38, 0.25), var(--shadow);
+    }
+
+    .picker-wrapper {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.15);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .picker-wrapper .color-dot {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.85);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .picker-wrapper input[type="color"] {
+      position: absolute;
+      inset: -10px;
+      width: 48px;
+      height: 48px;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      margin: 0;
+      z-index: 2;
+    }
+
+    .color-card .num {
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: var(--ink);
+    }
+
+    .color-card .edit-hint {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    @media (min-width: 640px) {
+      .palette { grid-template-columns: repeat(10, 1fr); }
+      h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>رنگ‌آمیزی با شماره</h1>
+    <p class="subtitle">یک رنگ را انتخاب کنید و داخل محدوده‌های خط‌کشی‌شده بزنید (رنگ‌ها قابل ویرایش هستند)</p>
+  </header>
+
+  <div class="toolbar">
+    <label class="file-btn primary">
+      بارگذاری تصویر
+      <input id="fileInput" type="file" accept="image/png,image/jpeg,image/jpg">
+    </label>
+    <button id="undoBtn" class="ghost" type="button" disabled>بازگردانی</button>
+    <button id="resetBtn" class="ghost" type="button" disabled>پاک‌کردن رنگ‌ها</button>
+    <button id="resetPaletteBtn" class="ghost" type="button" title="بازنشانی رنگ‌های پالت به حالت اولیه">بازنشانی پالت</button>
+    <button id="downloadBtn" class="good" type="button" disabled>دانلود PNG</button>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="canvas-card">
+      <canvas id="board" width="800" height="600" aria-label="بوم رنگ‌آمیزی"></canvas>
+      <div id="hint" class="hint">تصویر خط‌کشی‌شده PNG یا JPG را بارگذاری کنید تا رنگ‌آمیزی شروع شود.</div>
+    </div>
+    <div class="status">
+      <div class="selected">
+        رنگ انتخاب‌شده:
+        <span id="selectedSwatch" class="swatch"></span>
+        <span id="selectedLabel">۱</span>
+      </div>
+      <div id="msg">آماده</div>
+    </div>
+  </div>
+
+  <div class="palette-section">
+    <div class="palette-header">
+      <span class="palette-title">پالت رنگ‌ها (برای تغییر رنگ، روی دایره رنگ کلیک کنید):</span>
+    </div>
+    <div id="palette" class="palette" role="listbox" aria-label="پالت رنگ"></div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var DEFAULT_PALETTE = [
+        { n: 1, name: "قرمز", hex: "#e23b2c" },
+        { n: 2, name: "نارنجی", hex: "#f08a24" },
+        { n: 3, name: "زرد", hex: "#f2d04b" },
+        { n: 4, name: "سبز", hex: "#3caf5a" },
+        { n: 5, name: "آبی روشن", hex: "#4db6e2" },
+        { n: 6, name: "آبی", hex: "#2f6fdb" },
+        { n: 7, name: "بنفش", hex: "#8a4dcc" },
+        { n: 8, name: "صورتی", hex: "#ef6ea8" },
+        { n: 9, name: "قهوه‌ای", hex: "#8b5a2b" },
+        { n: 10, name: "خاکستری", hex: "#8d8d8d" }
+      ];
+
+      var PALETTE = JSON.parse(JSON.stringify(DEFAULT_PALETTE));
+
+      var LINE_LUMA = 92;
+      var MAX_UNDO = 20;
+
+      var canvas = document.getElementById("board");
+      var ctx = canvas.getContext("2d", { willReadFrequently: true });
+      var fileInput = document.getElementById("fileInput");
+      var undoBtn = document.getElementById("undoBtn");
+      var resetBtn = document.getElementById("resetBtn");
+      var resetPaletteBtn = document.getElementById("resetPaletteBtn");
+      var downloadBtn = document.getElementById("downloadBtn");
+      var hint = document.getElementById("hint");
+      var msg = document.getElementById("msg");
+      var paletteEl = document.getElementById("palette");
+      var selectedSwatch = document.getElementById("selectedSwatch");
+      var selectedLabel = document.getElementById("selectedLabel");
+
+      var selectedIndex = 0;
+      var originalImageData = null;
+      var undoStack = [];
+      var hasImage = false;
+      var filling = false;
+
+      function toPersianDigits(value) {
+        var map = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+        return String(value).replace(/\d/g, function (d) { return map[Number(d)]; });
+      }
+
+      function hexToRgba(hex) {
+        var h = hex.replace("#", "");
+        if (h.length === 3) {
+          h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+        }
+        return [
+          parseInt(h.slice(0, 2), 16),
+          parseInt(h.slice(2, 4), 16),
+          parseInt(h.slice(4, 6), 16),
+          255
+        ];
+      }
+
+      function setMessage(text) {
+        msg.textContent = text;
+      }
+
+      function updateButtons() {
+        undoBtn.disabled = !hasImage || undoStack.length === 0;
+        resetBtn.disabled = !hasImage;
+        downloadBtn.disabled = !hasImage;
+      }
+
+      function setSelected(index) {
+        selectedIndex = index;
+        var item = PALETTE[index];
+        selectedSwatch.style.background = item.hex;
+        selectedLabel.textContent = toPersianDigits(item.n) + " (" + item.hex.toUpperCase() + ")";
+        var cards = paletteEl.querySelectorAll(".color-card");
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].classList.toggle("active", i === index);
+        }
+      }
+
+      function updateColorAtIndex(index, newHex) {
+        PALETTE[index].hex = newHex;
+        var dot = paletteEl.querySelector('#dot-' + index);
+        if (dot) {
+          dot.style.background = newHex;
+        }
+        if (selectedIndex === index) {
+          selectedSwatch.style.background = newHex;
+          selectedLabel.textContent = toPersianDigits(PALETTE[index].n) + " (" + newHex.toUpperCase() + ")";
+        }
+      }
+
+      function buildPalette() {
+        paletteEl.innerHTML = "";
+        for (var i = 0; i < PALETTE.length; i++) {
+          (function (idx) {
+            var item = PALETTE[idx];
+            var card = document.createElement("div");
+            card.className = "color-card";
+            card.setAttribute("role", "option");
+            card.setAttribute("tabindex", "0");
+            card.title = "انتخاب رنگ شماره " + toPersianDigits(item.n) + " (برای تغییر، روی دایره کلیک کنید)";
+
+            card.innerHTML = 
+              '<div class="picker-wrapper" title="تغییر این رنگ">' +
+                '<span id="dot-' + idx + '" class="color-dot" style="background:' + item.hex + '"></span>' +
+                '<input id="input-' + idx + '" type="color" value="' + item.hex + '" aria-label="تغییر رنگ شماره ' + item.n + '">' +
+              '</div>' +
+              '<span class="num">' + toPersianDigits(item.n) + '</span>';
+
+            card.addEventListener("click", function (e) {
+              setSelected(idx);
+            });
+
+            var colorInput = card.querySelector('#input-' + idx);
+            colorInput.addEventListener("input", function (e) {
+              updateColorAtIndex(idx, e.target.value);
+            });
+            colorInput.addEventListener("change", function (e) {
+              updateColorAtIndex(idx, e.target.value);
+              setSelected(idx);
+              setMessage("رنگ شماره " + toPersianDigits(item.n) + " به " + e.target.value.toUpperCase() + " تغییر یافت.");
+            });
+
+            paletteEl.appendChild(card);
+          })(i);
+        }
+        setSelected(selectedIndex);
+      }
+
+      function resetPalette() {
+        PALETTE = JSON.parse(JSON.stringify(DEFAULT_PALETTE));
+        for (var i = 0; i < PALETTE.length; i++) {
+          var dot = paletteEl.querySelector('#dot-' + i);
+          var input = paletteEl.querySelector('#input-' + i);
+          if (dot) dot.style.background = PALETTE[i].hex;
+          if (input) input.value = PALETTE[i].hex;
+        }
+        setSelected(selectedIndex);
+        setMessage("رنگ‌های پالت به حالت اولیه بازنشانی شدند.");
+      }
+
+      function snapshot() {
+        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+        updateButtons();
+      }
+
+      function loadImageFile(file) {
+        if (!file) return;
+        var type = (file.type || "").toLowerCase();
+        if (type && type !== "image/png" && type !== "image/jpeg" && type !== "image/jpg") {
+          setMessage("فقط فایل PNG یا JPG مجاز است.");
+          return;
+        }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          var maxSide = 1600;
+          var scale = Math.min(1, maxSide / Math.max(w, h));
+          canvas.width = Math.max(1, Math.round(w * scale));
+          canvas.height = Math.max(1, Math.round(h * scale));
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          undoStack = [];
+          hasImage = true;
+          hint.classList.add("hidden");
+          setMessage("تصویر آماده است. یک رنگ بزنید.");
+          updateButtons();
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          setMessage("خواندن تصویر ناموفق بود.");
+        };
+        img.src = url;
+      }
+
+      function eventToPixel(ev) {
+        var rect = canvas.getBoundingClientRect();
+        var clientX;
+        var clientY;
+        if (ev.touches && ev.touches.length) {
+          clientX = ev.touches[0].clientX;
+          clientY = ev.touches[0].clientY;
+        } else if (ev.changedTouches && ev.changedTouches.length) {
+          clientX = ev.changedTouches[0].clientX;
+          clientY = ev.changedTouches[0].clientY;
+        } else {
+          clientX = ev.clientX;
+          clientY = ev.clientY;
+        }
+        var x = Math.floor((clientX - rect.left) * (canvas.width / rect.width));
+        var y = Math.floor((clientY - rect.top) * (canvas.height / rect.height));
+        return { x: x, y: y };
+      }
+
+      function isWall(data, idx) {
+        var r = data[idx];
+        var g = data[idx + 1];
+        var b = data[idx + 2];
+        var a = data[idx + 3];
+        if (a < 20) return true;
+        var luma = 0.299 * r + 0.587 * g + 0.114 * b;
+        return luma < LINE_LUMA;
+      }
+
+      function sameColor(data, idx, color) {
+        return data[idx] === color[0] &&
+          data[idx + 1] === color[1] &&
+          data[idx + 2] === color[2] &&
+          data[idx + 3] === color[3];
+      }
+
+      function floodFill(startX, startY, color) {
+        var w = canvas.width;
+        var h = canvas.height;
+        if (startX < 0 || startY < 0 || startX >= w || startY >= h) return false;
+        var image = ctx.getImageData(0, 0, w, h);
+        var data = image.data;
+        var start = (startY * w + startX) * 4;
+        if (isWall(data, start)) {
+          setMessage("روی خط تیره نمی‌توان رنگ ریخت.");
+          return false;
+        }
+        if (sameColor(data, start, color)) return false;
+
+        var stack = [startX, startY];
+        var seen = new Uint8Array(w * h);
+        seen[startY * w + startX] = 1;
+        var painted = 0;
+
+        while (stack.length) {
+          var y = stack.pop();
+          var x = stack.pop();
+          var i = (y * w + x) * 4;
+          if (isWall(data, i)) continue;
+          data[i] = color[0];
+          data[i + 1] = color[1];
+          data[i + 2] = color[2];
+          data[i + 3] = color[3];
+          painted += 1;
+
+          if (x > 0 && !seen[y * w + (x - 1)]) {
+            seen[y * w + (x - 1)] = 1;
+            stack.push(x - 1, y);
+          }
+          if (x + 1 < w && !seen[y * w + (x + 1)]) {
+            seen[y * w + (x + 1)] = 1;
+            stack.push(x + 1, y);
+          }
+          if (y > 0 && !seen[(y - 1) * w + x]) {
+            seen[(y - 1) * w + x] = 1;
+            stack.push(x, y - 1);
+          }
+          if (y + 1 < h && !seen[(y + 1) * w + x]) {
+            seen[(y + 1) * w + x] = 1;
+            stack.push(x, y + 1);
+          }
+        }
+
+        if (painted === 0) return false;
+        ctx.putImageData(image, 0, 0);
+        return true;
+      }
+
+      function paintAtEvent(ev) {
+        if (!hasImage || filling) return;
+        var pt = eventToPixel(ev);
+        filling = true;
+        snapshot();
+        var color = hexToRgba(PALETTE[selectedIndex].hex);
+        var changed = floodFill(pt.x, pt.y, color);
+        if (!changed) {
+          undoStack.pop();
+          updateButtons();
+        } else {
+          setMessage("محدوده با رنگ " + toPersianDigits(PALETTE[selectedIndex].n) + " پر شد.");
+        }
+        filling = false;
+      }
+
+      function undo() {
+        if (!undoStack.length) return;
+        var prev = undoStack.pop();
+        ctx.putImageData(prev, 0, 0);
+        setMessage("آخرین رنگ بازگردانده شد.");
+        updateButtons();
+      }
+
+      function resetColors() {
+        if (!originalImageData) return;
+        snapshot();
+        ctx.putImageData(originalImageData, 0, 0);
+        setMessage("تصویر به حالت اول برگشت.");
+      }
+
+      function downloadPng() {
+        if (!hasImage) return;
+        var a = document.createElement("a");
+        a.href = canvas.toDataURL("image/png");
+        a.download = "rang-amizi.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setMessage("فایل PNG آماده دانلود شد.");
+      }
+
+      canvas.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        paintAtEvent(ev);
+      });
+
+      canvas.addEventListener("touchend", function (ev) {
+        ev.preventDefault();
+        paintAtEvent(ev);
+      }, { passive: false });
+
+      canvas.addEventListener("touchstart", function (ev) {
+        ev.preventDefault();
+      }, { passive: false });
+
+      fileInput.addEventListener("change", function (ev) {
+        var file = ev.target.files && ev.target.files[0];
+        loadImageFile(file);
+        fileInput.value = "";
+      });
+
+      undoBtn.addEventListener("click", undo);
+      resetBtn.addEventListener("click", resetColors);
+      resetPaletteBtn.addEventListener("click", resetPalette);
+      downloadBtn.addEventListener("click", downloadPng);
+
+      buildPalette();
+      updateButtons();
+    })();
+  </script>
+</body>
+</html>
